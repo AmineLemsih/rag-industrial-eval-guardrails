@@ -1,0 +1,3 @@
+{"question": "Quelle est la durée de validité des mots de passe selon la procédure de sécurité informatique ?", "ground_truths": ["Les mots de passe doivent être renouvelés tous les trois mois."]}
+{"question": "À qui faut-il transmettre les factures après une commande selon la procédure d'achat ?", "ground_truths": ["Toutes les factures doivent être transmises au service comptable."]}
+{"question": "Quelle est la plage horaire habituelle de travail selon le manuel de l'employé ?", "ground_truths": ["Les horaires de travail habituels sont de 9h à 17h du lundi au vendredi."]}

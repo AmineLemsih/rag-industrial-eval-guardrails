@@ -1,0 +1,11 @@
+version: 1
+metrics:
+  - name: faithfulness
+    weight: 1.0
+  - name: answer_relevance
+    weight: 1.0
+  - name: context_precision
+    weight: 1.0
+  - name: context_recall
+    weight: 1.0
+aggregator: average

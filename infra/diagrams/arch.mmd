@@ -1,0 +1,24 @@
+%% Mermaid diagram describing the architecture of the RAG pipeline.
+
+flowchart TD
+    subgraph Client
+        UQ[Utilisateur]
+    end
+    subgraph API
+        UQ --> API[FastAPI /query]
+        API --> GR[Guardrails (PII, classification, rate limit)]
+        GR --> RETR[Hybrid Retriever]
+        RETR --> RER[Cross‑encoder Reranker]
+        RER --> LLM[LLM generator]
+        LLM --> CV[Validation citations]
+        CV --> RESP[Réponse avec citations]
+    end
+    subgraph Storage
+        DB[(PostgreSQL + pgvector)]
+        Corpus[Corpus PDF/HTML]
+    end
+    GR -->|logs| Obs[Observabilité]
+    RETR --> DB
+    API --> Obs
+    Obs -->|métriques| Prom[Prometheus]
+    Corpus -->|ingest| DB

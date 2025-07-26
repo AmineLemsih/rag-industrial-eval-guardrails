@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/postgres:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: rag_user
+          POSTGRES_PASSWORD: rag_password
+          POSTGRES_DB: rag
+        options: >-
+          --health-cmd "pg_isready -U rag_user" --health-interval 5s --health-timeout 5s --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+    - name: Initialise database
+      run: |
+        psql postgresql://rag_user:rag_password@localhost:5432/rag -f db/init.sql
+    - name: Generate corpus
+      run: python scripts/generate_synthetic_corpus.py
+    - name: Ingest data
+      run: python scripts/ingest.py
+    - name: Run tests
+      run: pytest -q
+    - name: Evaluate RAGAS
+      run: |
+        python scripts/evaluate_ragas.py
+        python - <<'PY'
+import json, os, re
+report_path = os.path.join('reports', 'ragas_report.md')
+with open(report_path) as f:
+    text = f.read()
+import re
+scores = {}
+for line in text.split('\n'):
+    m = re.match(r"\|\s*(\w+)\s*\|\s*([0-9.]+)\s*\|", line)
+    if m:
+        scores[m.group(1)] = float(m.group(2))
+thresholds = { 'faithfulness': 0.8, 'answer_relevance': 0.85 }
+for metric, threshold in thresholds.items():
+    if scores.get(metric, 0) < threshold:
+        raise SystemExit(f"Metric {metric} below threshold {threshold}: {scores.get(metric, 0)}")
+PY
+    - name: Benchmark latency
+      run: python scripts/bench_latency.py --url http://localhost:8000/query --requests 5 --concurrency 1 &> /dev/null || true

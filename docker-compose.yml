@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  postgres:
+    build:
+      context: ./db
+      dockerfile: pgvector.Dockerfile
+    container_name: rag_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rag_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag_password}
+      POSTGRES_DB: ${POSTGRES_DB:-rag}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Reexport database variables for the app
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    # The API image runs uvicorn with the module path set in the Dockerfile.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      # Mount the synthetic corpus directory so that documents generated on the host are visible in the container.
+      - ./data:/app/data
+      # Mount scripts to enable running ingestion from inside the container if desired.
+      - ./scripts:/app/scripts
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local
