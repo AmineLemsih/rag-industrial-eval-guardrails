@@ -1,6 +1,3 @@
-# rag-industrial-eval-guardrails
-Industrial-grade RAG pipeline (Retrieval-Augmented Generation) with hybrid search, evaluation (RAGAS), and enterprise-grade guardrails (PII detection, citation validation, rate limiting). Ready for local-first deployment (pgvector, Ollama) or cloud (OpenAI, Bedrock).
-
 # RAG Industrial Eval Guardrails
 
 **rag-industrial-eval-guardrails** est un projet industrialisé de _Retrieval‑Augmented Generation_ (RAG) conçu pour être auto‑hébergé, mesurable et sécurisé.  Il combine une recherche hybride (BM25 + vecteur), un ré‑ordonnancement par cross‑encoder, un générateur LLM configurable et une série de garde‑fous (détection PII, refus hors corpus, validation de citations et limitation de débit).  L’ensemble est évalué à l’aide de RAGAS et prêt à être déployé en production via Docker.
